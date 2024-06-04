@@ -30,14 +30,14 @@ type Profile = {
 
 type Token = string;
 
-type RegisterReq = {
+export type RegisterReq = {
   username: string;
   password: string;
 };
 
 type RegisterRes = Account & Profile & { token: Token };
 
-type LoginReq = RegisterReq;
+export type LoginReq = RegisterReq;
 
 type LoginRes = RegisterRes;
 

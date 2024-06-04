@@ -1,15 +1,18 @@
 import { createBrowserRouter } from "react-router-dom";
 
-const dynImport = async (path: string) => {
-  const component = await import(path);
-  return {
-    Component: component.default,
-  };
-};
-
 export const router = createBrowserRouter([
   {
     path: "/",
-    lazy: () => dynImport("./App.tsx"),
+    lazy: async () => ({
+      Component: (await import(`./App.tsx`)).default,
+    }),
+    children: [
+      {
+        path: "login",
+        lazy: async () => ({
+          Component: (await import(`./pages/auth/Login.tsx`)).default,
+        }),
+      },
+    ],
   },
 ]);
