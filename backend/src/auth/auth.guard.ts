@@ -24,6 +24,7 @@ export class AuthGuard implements CanActivate {
     if (isPublic) return true;
     const request: Request = context.switchToHttp().getRequest();
     const bearerString = request.headers.authorization;
+    if (!bearerString) throw new UnauthorizedException();
     const token = bearerString.split(" ")[1];
     if (!token) throw new UnauthorizedException();
     try {
