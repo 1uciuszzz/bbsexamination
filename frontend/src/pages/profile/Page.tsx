@@ -2,8 +2,8 @@ import {
   Alert,
   Button,
   FormControl,
-  FormLabel,
   IconButton,
+  InputLabel,
   MenuItem,
   Select,
   TextField,
@@ -180,7 +180,7 @@ const ProfilePage = () => {
           />
 
           <FormControl variant="standard">
-            <FormLabel>Gender</FormLabel>
+            <InputLabel>Gender</InputLabel>
             <Select
               label="Gender"
               value={data.gender || Gender.OTHER}
@@ -224,9 +224,11 @@ const ProfilePage = () => {
             label="Birthday"
             value={data.birthday ? dayjs(data.birthday) : null}
             onChange={(v) => {
-              setData((d) => {
-                d.birthday = v?.toISOString() || "";
-              });
+              if (v) {
+                setData((d) => {
+                  d.birthday = v.toISOString();
+                });
+              }
             }}
             slotProps={{
               textField: {

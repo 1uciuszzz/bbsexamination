@@ -55,3 +55,30 @@ model MinioFilePart {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+enum BillingType {
+  INCOME
+  EXPENSE
+}
+
+enum BillingCategory {
+  FOOD
+  TRANSPORT
+  SHOPPING
+  ENTERTAINMENT
+  HEALTH
+  EDUCATION
+  OTHER
+}
+
+model Billing {
+  id        String          @id @default(uuid())
+  accountId String
+  name      String
+  amount    Int
+  type      BillingType
+  time      DateTime
+  category  BillingCategory
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}

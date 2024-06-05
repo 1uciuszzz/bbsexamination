@@ -19,6 +19,35 @@ export const router = createBrowserRouter([
           Component: (await import(`./pages/profile/Page.tsx`)).default,
         }),
       },
+      {
+        path: "billing",
+        lazy: async () => ({
+          Component: (await import(`./pages/billing/Page.tsx`)).default,
+        }),
+        children: [
+          {
+            path: "",
+            lazy: async () => ({
+              Component: (await import(`./pages/billing/List.tsx`)).default,
+            }),
+            children: [
+              {
+                path: "delete/:id",
+                lazy: async () => ({
+                  Component: (await import(`./pages/billing/Delete.tsx`))
+                    .default,
+                }),
+              },
+            ],
+          },
+          {
+            path: "create",
+            lazy: async () => ({
+              Component: (await import(`./pages/billing/Create.tsx`)).default,
+            }),
+          },
+        ],
+      },
     ],
   },
   {
