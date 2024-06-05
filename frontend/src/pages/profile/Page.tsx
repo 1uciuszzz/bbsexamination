@@ -141,6 +141,7 @@ const ProfilePage = () => {
 
           <HStack>
             <TextField
+              fullWidth
               variant="standard"
               label="First Name"
               type="text"
@@ -153,6 +154,7 @@ const ProfilePage = () => {
             />
 
             <TextField
+              fullWidth
               variant="standard"
               label="Last Name"
               type="text"
