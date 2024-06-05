@@ -41,7 +41,7 @@ const BillingListItem = ({ billing }: BillingListItemProps) => {
             ? "#eb3140"
             : billing.category == BillingCategory.SHOPPING
               ? "#2189dc"
-              : billing.category == BillingCategory.TRANSPORTATION
+              : billing.category == BillingCategory.TRANSPORT
                 ? "#fff321"
                 : billing.category == BillingCategory.ENTERTAINMENT
                   ? "#34cd2b"
