@@ -22,6 +22,8 @@ import { useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { API_MINIO_FILE } from "../../apis/minioFile";
 import toast from "react-hot-toast";
+import { accountAtom } from "../stores/account";
+import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
   const profile = useAtomValue(profileAtom);
@@ -72,6 +74,30 @@ const ProfilePage = () => {
 
   const handleSave = () => {
     save();
+  };
+
+  const setAccount = useSetAtom(accountAtom);
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    setAccount({ id: "", username: "", createdAt: "", updatedAt: "" });
+    setProfile({
+      id: "",
+      accountId: "",
+      avatarId: "",
+      firstName: "",
+      lastName: "",
+      bio: "",
+      email: "",
+      phone: "",
+      birthday: "",
+      gender: null,
+      createdAt: "",
+      updatedAt: "",
+    });
+    localStorage.clear();
+    navigate("/auth");
   };
 
   return (
@@ -217,6 +243,10 @@ const ProfilePage = () => {
             disabled={saveIsPending}
           >
             Save
+          </Button>
+
+          <Button onClick={handleLogout} variant="outlined" color="error">
+            Logout
           </Button>
         </VStack>
       </div>
