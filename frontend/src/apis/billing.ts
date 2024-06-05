@@ -7,8 +7,8 @@ export enum BillingType {
 
 export enum BillingCategory {
   FOOD = "FOOD",
+  TRANSPORT = "TRANSPORT",
   SHOPPING = "SHOPPING",
-  TRANSPORTATION = "TRANSPORTATION",
   ENTERTAINMENT = "ENTERTAINMENT",
   HEALTH = "HEALTH",
   EDUCATION = "EDUCATION",

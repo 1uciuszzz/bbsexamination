@@ -140,8 +140,8 @@ const BillingForm = ({ initialData }: BillingFormProps) => {
               >
                 <MenuItem value={BillingCategory.FOOD}>🔴Food</MenuItem>
                 <MenuItem value={BillingCategory.SHOPPING}>🔵Shopping</MenuItem>
-                <MenuItem value={BillingCategory.TRANSPORTATION}>
-                  🟡Transportation
+                <MenuItem value={BillingCategory.TRANSPORT}>
+                  🟡Transport
                 </MenuItem>
                 <MenuItem value={BillingCategory.ENTERTAINMENT}>
                   🟢Entertainment
