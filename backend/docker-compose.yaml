@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  billings:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: billings
+    restart: always
+    ports:
+      - "18411:3000"
+    environment:
+      DATABASE_URL: ""
+      JWT_SECRET: ""
+      MINIO_ENDPOINT: ""
+      MINIO_ACCESS_KEY: ""
+      MINIO_SECRET_KEY: ""
+      MINIO_BUCKET: ""
+
