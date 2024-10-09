@@ -23,7 +23,7 @@ import {
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { Close, Logout, SaveAlt } from "@mui/icons-material";
 import Back from "../../components/Back";
-import { Jimp, loadFont } from "jimp";
+import toast from "react-hot-toast";
 
 type BillingListItemProps = {
   billing: Billing;
@@ -114,66 +114,74 @@ const BillingList = () => {
     mutate: doExport,
   } = useMutation({
     mutationFn: async () => {
-      const width = 512;
-      const height = (data?.data.billings.length || 1) * 64 + 192;
-      const bgColor = 0xffffffff;
-      const img = new Jimp({ width, height, color: bgColor });
-      const font = await loadFont("noto-sans.fnt");
-      let lineCount = 0;
-      img.print({ text: `B1g Ben Billings`, x: 16, y: lineCount * 32, font });
-      lineCount++;
-      img.print({
-        text: `${q.startTime ? dayjs(q.startTime).format(`YYYY-MM-DD`) : dayjs(new Date()).subtract(7, "D").format(`YYYY-MM-DD`)} ~ ${q.endTime ? dayjs(q.startTime).format(`YYYY-MM-DD`) : dayjs(new Date()).format(`YYYY-MM-DD`)}`,
-        x: 16,
-        y: lineCount * 32,
-        font,
+      const canvas = document.createElement("canvas");
+      canvas.width = 540;
+      canvas.height = (data?.data.billings.length || 1) * 30 + 160;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        toast.error(`Can not get context.`);
+        return;
+      }
+      ctx.fillStyle = `#ffffff`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = `#000000`;
+      ctx.font = `bold 40px mono`;
+      ctx.textBaseline = "top";
+      ctx.fillText(`B1g Ben Billings`, 110, 50);
+      const today = new Date();
+      const startTime = q.startTime
+        ? q.startTime
+        : dayjs(today).subtract(7, "D").format(`YYYY/MM/DD`);
+      const endTime = q.endTime ? q.endTime : dayjs(today).format(`YYYY/MM/DD`);
+      ctx.fillStyle = `#888888`;
+      ctx.font = `20px mono`;
+      ctx.fillText(`${startTime} - ${endTime}`, 150, 100);
+      ctx.beginPath();
+      ctx.moveTo(20, 130);
+      ctx.lineTo(520, 130);
+      ctx.stroke();
+      ctx.closePath();
+      ctx.fillStyle = `#395260`;
+      data?.data.billings.forEach((b, i) => {
+        ctx.font = `20px`;
+        ctx.fillText(
+          `${b.amount >= 100 ? "❗" : ""}  ${
+            b.category == BillingCategory.FOOD
+              ? "🔴"
+              : b.category == BillingCategory.SHOPPING
+                ? "🔵"
+                : b.category == BillingCategory.TRANSPORT
+                  ? "🟡"
+                  : b.category == BillingCategory.ENTERTAINMENT
+                    ? "🟢"
+                    : b.category == BillingCategory.HEALTH
+                      ? "🟠"
+                      : b.category == BillingCategory.EDUCATION
+                        ? "🟣"
+                        : "🟤"
+          }  ${b.type == BillingType.EXPENSE ? "💸" : "💰"}  ${dayjs(b.time).format(`MM/DD HH:mm`)}  ${b.name}  💲${b.amount}`,
+          20,
+          150 + i * 30
+        );
       });
-      lineCount++;
-      Array.from(
-        new Set(
-          data?.data.billings.map((b) => {
-            const date = dayjs(b.time).format("YYYY-MM-DD");
-            return date;
-          })
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error(`Generate image failed.`);
+          return;
+        }
+        const a = document.createElement("a");
+        const url = URL.createObjectURL(
+          new Blob([blob], { type: "image/jpeg" })
+        );
+        a.href = url;
+        a.download = `b1gben billings:${q.startTime ? dayjs(q.startTime).toDate().getTime() : dayjs(new Date()).subtract(7, "D").toDate().getTime()}-${dayjs(
+          q.endTime || new Date()
         )
-      ).forEach((date) => {
-        img.print({
-          text: `~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`,
-          x: 16,
-          y: lineCount * 32,
-          font,
-        });
-        lineCount++;
-        img.print({ font, text: date, x: 16, y: lineCount * 32 });
-        lineCount++;
-        data?.data.billings
-          .filter((b) => {
-            const d = dayjs(b.time).format("YYYY-MM-DD");
-            return d === date;
-          })
-          .forEach((b) => {
-            img.print({
-              font,
-              text: `${b.amount >= 100 ? "!!!" : ""}${b.type == BillingType.EXPENSE ? "→" : "↓"}${dayjs(b.time).format(`HH:mm:ss`)}  ${b.name}  ${b.amount}元`,
-              x: 32,
-              y: lineCount * 32,
-            });
-            lineCount++;
-          });
-      });
-      const imgBuffer = await img.getBuffer("image/jpeg");
-      const a = document.createElement("a");
-      const url = URL.createObjectURL(
-        new Blob([imgBuffer], { type: "image/jpeg" })
-      );
-      a.href = url;
-      a.download = `b1gben billings:${q.startTime ? dayjs(q.startTime).toDate().getTime() : dayjs(new Date()).subtract(7, "D").toDate().getTime()}-${dayjs(
-        q.endTime || new Date()
-      )
-        .toDate()
-        .getTime()}.jpg`;
-      a.click();
-      URL.revokeObjectURL(url);
+          .toDate()
+          .getTime()}.jpg`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }, "image/jpeg");
     },
   });
 
