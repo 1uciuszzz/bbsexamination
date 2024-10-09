@@ -45,9 +45,9 @@ const Register = () => {
     <>
       <form onSubmit={handleSubmit} className="p-4">
         <VStack>
-          <Typography variant="h5">Baby's examination</Typography>
+          <Typography variant="h5">B1g Ben's Billing App</Typography>
 
-          <Typography variant="h6">Register page</Typography>
+          <Typography variant="h6">Register</Typography>
 
           <TextField
             label="Username"

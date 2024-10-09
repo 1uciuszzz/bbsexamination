@@ -29,7 +29,7 @@ const HomePage = () => {
                 className="underline text-blue-600"
                 target="_blank"
               >
-                Lucius
+                B1g Ben
               </Link>{" "}
               with the help of Leehao
             </Typography>

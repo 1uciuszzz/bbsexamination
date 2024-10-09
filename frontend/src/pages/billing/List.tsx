@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   API_BILLING,
   Billing,
@@ -23,6 +23,7 @@ import {
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { Close, Logout, SaveAlt } from "@mui/icons-material";
 import Back from "../../components/Back";
+import { Jimp, loadFont } from "jimp";
 
 type BillingListItemProps = {
   billing: Billing;
@@ -105,6 +106,76 @@ const BillingList = () => {
       d.endTime = "";
     });
   };
+
+  const {
+    isPending: exportIsPending,
+    isError: exportIsError,
+    error: exportError,
+    mutate: doExport,
+  } = useMutation({
+    mutationFn: async () => {
+      const width = 512;
+      const height = (data?.data.billings.length || 1) * 64 + 192;
+      const bgColor = 0xffffffff;
+      const img = new Jimp({ width, height, color: bgColor });
+      const font = await loadFont("noto-sans.fnt");
+      let lineCount = 0;
+      img.print({ text: `B1g Ben Billings`, x: 16, y: lineCount * 32, font });
+      lineCount++;
+      img.print({
+        text: `${q.startTime ? dayjs(q.startTime).format(`YYYY-MM-DD`) : dayjs(new Date()).subtract(7, "D").format(`YYYY-MM-DD`)} ~ ${q.endTime ? dayjs(q.startTime).format(`YYYY-MM-DD`) : dayjs(new Date()).format(`YYYY-MM-DD`)}`,
+        x: 16,
+        y: lineCount * 32,
+        font,
+      });
+      lineCount++;
+      Array.from(
+        new Set(
+          data?.data.billings.map((b) => {
+            const date = dayjs(b.time).format("YYYY-MM-DD");
+            return date;
+          })
+        )
+      ).forEach((date) => {
+        img.print({
+          text: `~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`,
+          x: 16,
+          y: lineCount * 32,
+          font,
+        });
+        lineCount++;
+        img.print({ font, text: date, x: 16, y: lineCount * 32 });
+        lineCount++;
+        data?.data.billings
+          .filter((b) => {
+            const d = dayjs(b.time).format("YYYY-MM-DD");
+            return d === date;
+          })
+          .forEach((b) => {
+            img.print({
+              font,
+              text: `${b.amount >= 100 ? "!!!" : ""}${b.type == BillingType.EXPENSE ? "→" : "↓"}${dayjs(b.time).format(`HH:mm:ss`)}  ${b.name}  ${b.amount}元`,
+              x: 32,
+              y: lineCount * 32,
+            });
+            lineCount++;
+          });
+      });
+      const imgBuffer = await img.getBuffer("image/jpeg");
+      const a = document.createElement("a");
+      const url = URL.createObjectURL(
+        new Blob([imgBuffer], { type: "image/jpeg" })
+      );
+      a.href = url;
+      a.download = `b1gben billings:${q.startTime ? dayjs(q.startTime).toDate().getTime() : dayjs(new Date()).subtract(7, "D").toDate().getTime()}-${dayjs(
+        q.endTime || new Date()
+      )
+        .toDate()
+        .getTime()}.jpg`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+  });
 
   if (isPending) return <CircularProgress />;
 
@@ -262,6 +333,19 @@ const BillingList = () => {
               </VStack>
             );
           })}
+
+          {exportIsError && (
+            <Alert severity="error">{exportError.message}</Alert>
+          )}
+
+          <Button
+            onClick={() => {
+              doExport();
+            }}
+            disabled={exportIsPending}
+          >
+            Export current data as an image
+          </Button>
         </VStack>
       </div>
 
