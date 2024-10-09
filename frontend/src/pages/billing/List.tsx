@@ -116,7 +116,7 @@ const BillingList = () => {
     mutationFn: async () => {
       const canvas = document.createElement("canvas");
       canvas.width = 540;
-      canvas.height = (data?.data.billings.length || 1) * 30 + 160;
+      canvas.height = (data?.data.billings.length || 1) * 30 + 240;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
         toast.error(`Can not get context.`);
@@ -145,8 +145,9 @@ const BillingList = () => {
       ctx.closePath();
       ctx.fillStyle = `#395260`;
       data?.data.billings.forEach((b, i) => {
+        ctx.fillText(`${b.amount >= 100 ? "❗" : ""}`, 10, 150 + i * 30);
         ctx.fillText(
-          `${b.amount >= 100 ? "❗" : "\t"}  ${
+          `${
             b.category == BillingCategory.FOOD
               ? "🔴"
               : b.category == BillingCategory.SHOPPING
@@ -165,6 +166,15 @@ const BillingList = () => {
           150 + i * 30
         );
       });
+      ctx.beginPath();
+      ctx.moveTo(20, 170 + (data?.data.billings.length || 1) * 30);
+      ctx.lineTo(520, 170 + (data?.data.billings.length || 1) * 30);
+      ctx.stroke();
+      ctx.fillText(
+        `💴结算金额：${(data?.data.expense || 0) + (data?.data.income || 0)}`,
+        20,
+        190 + (data?.data.billings.length || 1) * 30
+      );
       canvas.toBlob((blob) => {
         if (!blob) {
           toast.error(`Generate image failed.`);
