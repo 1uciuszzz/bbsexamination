@@ -125,16 +125,18 @@ const BillingList = () => {
       ctx.fillStyle = `#ffffff`;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = `#000000`;
-      ctx.font = `bold 40px mono`;
+      ctx.font = `bold 40px sans-serif`;
       ctx.textBaseline = "top";
       ctx.fillText(`B1g Ben Billings`, 110, 50);
       const today = new Date();
       const startTime = q.startTime
-        ? q.startTime
+        ? dayjs(q.startTime).format(`YYYY/MM/DD`)
         : dayjs(today).subtract(7, "D").format(`YYYY/MM/DD`);
-      const endTime = q.endTime ? q.endTime : dayjs(today).format(`YYYY/MM/DD`);
+      const endTime = q.endTime
+        ? dayjs(q.endTime).format(`YYYY/MM/DD`)
+        : dayjs(today).format(`YYYY/MM/DD`);
       ctx.fillStyle = `#888888`;
-      ctx.font = `20px mono`;
+      ctx.font = `20px monospace`;
       ctx.fillText(`${startTime} - ${endTime}`, 150, 100);
       ctx.beginPath();
       ctx.moveTo(20, 130);
@@ -143,9 +145,8 @@ const BillingList = () => {
       ctx.closePath();
       ctx.fillStyle = `#395260`;
       data?.data.billings.forEach((b, i) => {
-        ctx.font = `20px`;
         ctx.fillText(
-          `${b.amount >= 100 ? "❗" : ""}  ${
+          `${b.amount >= 100 ? "❗" : "\t"}  ${
             b.category == BillingCategory.FOOD
               ? "🔴"
               : b.category == BillingCategory.SHOPPING
@@ -159,7 +160,7 @@ const BillingList = () => {
                       : b.category == BillingCategory.EDUCATION
                         ? "🟣"
                         : "🟤"
-          }  ${b.type == BillingType.EXPENSE ? "💸" : "💰"}  ${dayjs(b.time).format(`MM/DD HH:mm`)}  ${b.name}  💲${b.amount}`,
+          }  ${b.type == BillingType.EXPENSE ? "💸" : "💰"}  ${dayjs(b.time).format(`MM/DD HH:mm`)}  ${b.name}  💲 ${b.amount}`,
           20,
           150 + i * 30
         );
