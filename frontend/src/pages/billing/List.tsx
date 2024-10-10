@@ -130,14 +130,14 @@ const BillingList = () => {
       ctx.fillText(`B1g Ben Billings`, 110, 50);
       const today = new Date();
       const startTime = q.startTime
-        ? dayjs(q.startTime).format(`YYYY/MM/DD`)
-        : dayjs(today).subtract(7, "D").format(`YYYY/MM/DD`);
+        ? dayjs(q.startTime).format(`YYYY-MM-DD`)
+        : dayjs(today).subtract(7, "days").format(`YYYY-MM-DD`);
       const endTime = q.endTime
-        ? dayjs(q.endTime).format(`YYYY/MM/DD`)
-        : dayjs(today).format(`YYYY/MM/DD`);
+        ? dayjs(q.endTime).format(`YYYY-MM-DD`)
+        : dayjs(today).format(`YYYY-MM-DD`);
       ctx.fillStyle = `#888888`;
       ctx.font = `20px monospace`;
-      ctx.fillText(`${startTime} - ${endTime}`, 150, 100);
+      ctx.fillText(`${startTime} _ ${endTime}`, 150, 100);
       ctx.beginPath();
       ctx.moveTo(20, 130);
       ctx.lineTo(520, 130);
@@ -145,7 +145,7 @@ const BillingList = () => {
       ctx.closePath();
       ctx.fillStyle = `#395260`;
       data?.data.billings.forEach((b, i) => {
-        ctx.fillText(`${b.amount >= 100 ? "❗" : ""}`, 10, 150 + i * 30);
+        ctx.fillText(`${b.amount >= 100 ? "❗" : ""}`, 5, 150 + i * 30);
         ctx.fillText(
           `${
             b.category == BillingCategory.FOOD
@@ -162,7 +162,7 @@ const BillingList = () => {
                         ? "🟣"
                         : "🟤"
           }  ${b.type == BillingType.EXPENSE ? "💸" : "💰"}  ${dayjs(b.time).format(`MM/DD HH:mm`)}  ${b.name}  💲 ${b.amount}`,
-          20,
+          30,
           150 + i * 30
         );
       });
@@ -185,11 +185,7 @@ const BillingList = () => {
           new Blob([blob], { type: "image/jpeg" })
         );
         a.href = url;
-        a.download = `b1gben billings:${q.startTime ? dayjs(q.startTime).toDate().getTime() : dayjs(new Date()).subtract(7, "D").toDate().getTime()}-${dayjs(
-          q.endTime || new Date()
-        )
-          .toDate()
-          .getTime()}.jpg`;
+        a.download = `${startTime}_${endTime}_billings.jpg`;
         a.click();
         URL.revokeObjectURL(url);
       }, "image/jpeg");
