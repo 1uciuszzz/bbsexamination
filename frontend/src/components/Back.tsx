@@ -1,6 +1,6 @@
-import { ArrowBackIosNew } from "@mui/icons-material";
-import { IconButton } from "@mui/material";
+import { ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "./ui/button";
 
 type BackProps = {
   to?: string;
@@ -15,9 +15,14 @@ const Back = ({ to }: BackProps) => {
   };
 
   return (
-    <IconButton onClick={handleClick}>
-      <ArrowBackIosNew />
-    </IconButton>
+    <Button
+      size="icon"
+      variant="ghost"
+      className="rounded-full"
+      onClick={handleClick}
+    >
+      <ChevronLeft size={24} />
+    </Button>
   );
 };
 

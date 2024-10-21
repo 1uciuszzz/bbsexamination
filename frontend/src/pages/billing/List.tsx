@@ -4,26 +4,26 @@ import {
   Billing,
   BillingCategory,
   BillingType,
-  ListReq,
 } from "../../apis/billing";
 import { useImmer } from "use-immer";
-import VStack from "../../components/VStack";
-import HStack from "../../components/HStack";
-import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
-import {
-  Alert,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  IconButton,
-  Typography,
-} from "@mui/material";
 import { Link, Outlet, useNavigate } from "react-router-dom";
-import { Close, Logout, SaveAlt } from "@mui/icons-material";
 import Back from "../../components/Back";
 import toast from "react-hot-toast";
+import PageLoader from "@/components/PageLoader";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { CalendarIcon, HandCoins, Import, X } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { zhCN } from "date-fns/locale";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 type BillingListItemProps = {
   billing: Billing;
@@ -35,8 +35,7 @@ const BillingListItem = ({ billing }: BillingListItemProps) => {
   return (
     <Alert
       key={billing.id}
-      icon={false}
-      sx={{
+      style={{
         borderLeft: `8px solid ${
           billing.category == BillingCategory.FOOD
             ? "#eb3140"
@@ -55,57 +54,46 @@ const BillingListItem = ({ billing }: BillingListItemProps) => {
                         : "#aaaaaa"
         }`,
       }}
-      action={
-        <IconButton onClick={() => navigate(`/billing/delete/${billing.id}`)}>
-          <Close />
-        </IconButton>
-      }
     >
-      <VStack>
-        <HStack>
+      <AlertTitle>
+        <div className="flex items-center gap-2">
           {billing.type == BillingType.EXPENSE ? (
-            <Logout fontSize="small" />
+            <HandCoins size={18} />
           ) : (
-            <SaveAlt fontSize="small" />
+            <Import size={18} />
           )}
-          <Typography fontFamily="monospace" variant="body1">
-            ${billing.amount}
-          </Typography>
-          <Typography title={billing.name}>{billing.name}</Typography>
-        </HStack>
-        <HStack>
-          <Typography variant="caption">
-            {dayjs(billing.time).format("YYYY-MM-DD HH:mm:ss")}
-          </Typography>
-        </HStack>
-      </VStack>
+          <Badge className="font-mono">{billing.amount}</Badge>
+          <p title={billing.name}>{billing.name}</p>
+        </div>
+      </AlertTitle>
+      <AlertDescription className="flex items-center justify-between">
+        <small>{dayjs(billing.time).format("YYYY-MM-DD HH:mm:ss")}</small>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => navigate(`/billing/delete/${billing.id}`)}
+          className="w-6 h-6"
+        >
+          <X />
+        </Button>
+      </AlertDescription>
     </Alert>
   );
 };
 
-const initialData: ListReq = {
-  startTime: "",
-  endTime: "",
-};
-
 const BillingList = () => {
-  const [q, setQ] = useImmer<ListReq>(initialData);
+  const [startTime, setStartTime] = useImmer<Date | undefined>(undefined);
+
+  const [endTime, setEndTime] = useImmer<Date | undefined>(undefined);
 
   const { isPending, data, isError, error } = useQuery({
-    queryKey: ["billings", q],
-    queryFn: () => API_BILLING.LIST(q),
+    queryKey: ["billings", startTime, endTime],
+    queryFn: () =>
+      API_BILLING.LIST({
+        startTime: startTime?.toISOString(),
+        endTime: endTime?.toISOString(),
+      }),
   });
-
-  const handleClearStartTime = () => {
-    setQ((d) => {
-      d.startTime = "";
-    });
-  };
-  const handleClearEndTime = () => {
-    setQ((d) => {
-      d.endTime = "";
-    });
-  };
 
   const {
     isPending: exportIsPending,
@@ -129,15 +117,15 @@ const BillingList = () => {
       ctx.textBaseline = "top";
       ctx.fillText(`B1g Ben Billings`, 110, 50);
       const today = new Date();
-      const startTime = q.startTime
-        ? dayjs(q.startTime).format(`YYYY-MM-DD`)
+      const st = startTime
+        ? dayjs(startTime).format(`YYYY-MM-DD`)
         : dayjs(today).subtract(7, "days").format(`YYYY-MM-DD`);
-      const endTime = q.endTime
-        ? dayjs(q.endTime).format(`YYYY-MM-DD`)
+      const et = endTime
+        ? dayjs(endTime).format(`YYYY-MM-DD`)
         : dayjs(today).format(`YYYY-MM-DD`);
       ctx.fillStyle = `#888888`;
       ctx.font = `20px monospace`;
-      ctx.fillText(`${startTime} _ ${endTime}`, 150, 100);
+      ctx.fillText(`${st} _ ${et}`, 150, 100);
       ctx.beginPath();
       ctx.moveTo(20, 130);
       ctx.lineTo(520, 130);
@@ -185,183 +173,159 @@ const BillingList = () => {
           new Blob([blob], { type: "image/jpeg" })
         );
         a.href = url;
-        a.download = `${startTime}_${endTime}_billings.jpg`;
+        a.download = `${st}_${et}_billings.jpg`;
         a.click();
         URL.revokeObjectURL(url);
       }, "image/jpeg");
     },
   });
 
-  if (isPending) return <CircularProgress />;
+  if (isPending) return <PageLoader />;
 
-  if (isError) return <Alert severity="error">{error.message}</Alert>;
+  if (isError)
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>错误</AlertTitle>
+        <AlertDescription>{error.message}</AlertDescription>
+      </Alert>
+    );
 
   return (
     <>
-      <div className="p-4">
-        <VStack>
-          <HStack>
-            <Back to="/" />
-            <Typography variant="h5">Billing List</Typography>
-          </HStack>
+      <div className="flex flex-col gap-6 p-6">
+        <div className="flex items-center gap-2">
+          <Back to="/" />
+          <h2 className="text-2xl">账单列表</h2>
+        </div>
 
-          <HStack>
-            <DatePicker
-              label="Start Time"
-              value={q.startTime ? dayjs(q.startTime) : null}
-              onChange={(v) => {
-                if (v) {
-                  setQ((d) => {
-                    d.startTime = v.toISOString();
-                  });
-                }
-              }}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                },
-                field: {
-                  clearable: true,
-                  onClear: () => {
-                    setQ((d) => {
-                      d.startTime = "";
-                    });
-                  },
-                },
-              }}
-            />
-
-            <DatePicker
-              label="End Time"
-              value={q.endTime ? dayjs(q.endTime) : null}
-              onChange={(v) => {
-                if (v) {
-                  setQ((d) => {
-                    d.endTime = v.toISOString();
-                  });
-                }
-              }}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                },
-                field: {
-                  clearable: true,
-                  onClear: () => {
-                    setQ((d) => {
-                      d.endTime = "";
-                    });
-                  },
-                },
-              }}
-            />
-          </HStack>
-
-          <HStack>
+        <div className="flex gap-6 justify-between">
+          <div className="flex-1 flex">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="flex-1">
+                  <CalendarIcon />
+                  {startTime ? (
+                    format(startTime, "PPP", { locale: zhCN })
+                  ) : (
+                    <span>起始日期</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={startTime}
+                  onSelect={setStartTime}
+                  initialFocus
+                  locale={zhCN}
+                />
+              </PopoverContent>
+            </Popover>
             <Button
-              variant="outlined"
-              size="large"
-              fullWidth
-              onClick={handleClearStartTime}
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                setStartTime(undefined);
+              }}
             >
-              Clear Start Time
+              <X />
             </Button>
-
+          </div>
+          <div className="flex-1 flex">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="flex-1">
+                  <CalendarIcon />
+                  {endTime ? (
+                    format(endTime, "PPP", { locale: zhCN })
+                  ) : (
+                    <span>结束日期</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={endTime}
+                  onSelect={setEndTime}
+                  initialFocus
+                  locale={zhCN}
+                />
+              </PopoverContent>
+            </Popover>
             <Button
-              variant="outlined"
-              size="large"
-              fullWidth
-              onClick={handleClearEndTime}
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                setEndTime(undefined);
+              }}
             >
-              Clear End Time
+              <X />
             </Button>
-          </HStack>
+          </div>
+        </div>
 
-          <Button
-            variant="outlined"
-            size="large"
-            component={Link}
-            to="/billing/create"
-          >
-            Create a new billing
-          </Button>
+        <Button asChild>
+          <Link to="/billing/create">创建新账单</Link>
+        </Button>
 
-          <Card>
-            <CardContent>
-              <VStack>
-                <HStack>
-                  <Typography variant="h6">Total Income</Typography>
-                  <Typography
-                    variant="h6"
-                    flexGrow={1}
-                    textAlign="end"
-                    fontFamily="monospace"
-                  >
-                    ${data.data.income}
-                  </Typography>
-                </HStack>
-                <HStack>
-                  <Typography variant="h6">Total Expense</Typography>
-                  <Typography
-                    variant="h6"
-                    flexGrow={1}
-                    textAlign="end"
-                    fontFamily="monospace"
-                  >
-                    ${data.data.expense}
-                  </Typography>
-                </HStack>
-                <HStack>
-                  <Typography variant="h6">Remaining</Typography>
-                  <Typography
-                    variant="h6"
-                    flexGrow={1}
-                    textAlign="end"
-                    fontFamily="monospace"
-                  >
-                    ${data.data.income - data.data.expense}
-                  </Typography>
-                </HStack>
-              </VStack>
-            </CardContent>
-          </Card>
+        <div className="flex justify-between">
+          <div className="flex gap-2">
+            <p>总收入</p>
+            <Badge className="font-mono">{data.data.income}</Badge>
+          </div>
 
-          {Array.from(
-            new Set(
-              data.data.billings.map((b) => {
-                const date = dayjs(b.time).format("YYYY-MM-DD");
-                return date;
-              })
-            )
-          ).map((date) => {
-            return (
-              <VStack key={date}>
-                <Typography variant="h6">{date}</Typography>
-                {data.data.billings
-                  .filter((b) => {
-                    const d = dayjs(b.time).format("YYYY-MM-DD");
-                    return d === date;
-                  })
-                  .map((b) => {
-                    return <BillingListItem key={b.id} billing={b} />;
-                  })}
-              </VStack>
-            );
-          })}
+          <div className="flex gap-2">
+            <p>总支出</p>
+            <Badge className="font-mono">{data.data.expense}</Badge>
+          </div>
+          <div className="flex gap-2">
+            <p>总结余</p>
+            <Badge className="font-mono">
+              {data.data.income - data.data.expense}
+            </Badge>
+          </div>
+        </div>
+        <Separator />
 
-          {exportIsError && (
-            <Alert severity="error">{exportError.message}</Alert>
-          )}
+        {Array.from(
+          new Set(
+            data.data.billings.map((b) => {
+              const date = dayjs(b.time).format("YYYY-MM-DD");
+              return date;
+            })
+          )
+        ).map((date) => {
+          return (
+            <div key={date} className="flex flex-col gap-2">
+              <h6 className="text-xl font-mono">{date}</h6>
+              {data.data.billings
+                .filter((b) => {
+                  const d = dayjs(b.time).format("YYYY-MM-DD");
+                  return d === date;
+                })
+                .map((b) => {
+                  return <BillingListItem key={b.id} billing={b} />;
+                })}
+            </div>
+          );
+        })}
 
-          <Button
-            onClick={() => {
-              doExport();
-            }}
-            disabled={exportIsPending}
-          >
-            Export current data as an image
-          </Button>
-        </VStack>
+        {exportIsError && (
+          <Alert variant="destructive">
+            <AlertTitle>错误</AlertTitle>
+            <AlertDescription>{exportError.message}</AlertDescription>
+          </Alert>
+        )}
+
+        <Button
+          onClick={() => {
+            doExport();
+          }}
+          disabled={exportIsPending}
+        >
+          导出当前数据为图片
+        </Button>
       </div>
 
       <Outlet />

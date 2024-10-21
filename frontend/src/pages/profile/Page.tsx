@@ -9,12 +9,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import VStack from "../../components/VStack";
 import { useImmer } from "use-immer";
 import { API_AUTH, Gender, Profile } from "../../apis/auth";
 import { useAtomValue, useSetAtom } from "jotai";
 import { profileAtom } from "../stores/profile";
-import HStack from "../../components/HStack";
 import { AccountCircle } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
@@ -102,157 +100,154 @@ const ProfilePage = () => {
 
   return (
     <>
-      <div className="p-4">
-        <VStack>
-          <Typography variant="h5">Baby's examination</Typography>
+      <div className="flex flex-col gap-6 p-6">
+        <Typography variant="h5">笨钟账单</Typography>
 
-          <Typography variant="h6">Profile page</Typography>
+        <Typography variant="h6">用户资料</Typography>
 
-          {uploadAvatarIsError && (
-            <Alert severity="error">{uploadAvatarError.message}</Alert>
-          )}
+        {uploadAvatarIsError && (
+          <Alert severity="error">{uploadAvatarError.message}</Alert>
+        )}
 
-          <div className="flex justify-center">
-            <input
-              type="file"
-              ref={AvatarInputRef}
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) uploadAvatar(file);
-              }}
-              accept="image/*"
-            />
-            <IconButton
-              onClick={() => AvatarInputRef.current!.click()}
-              disabled={uploadAvatarIsPending}
-            >
-              {data.avatarId ? (
-                <img
-                  src={`/api/minio-file/${data.avatarId}`}
-                  alt="avatar"
-                  className="w-20 h-20 rounded-full"
-                />
-              ) : (
-                <AccountCircle fontSize="large" />
-              )}
-            </IconButton>
-          </div>
-
-          <HStack>
-            <TextField
-              fullWidth
-              variant="standard"
-              label="First Name"
-              type="text"
-              value={data.firstName || ""}
-              onChange={(e) =>
-                setData((d) => {
-                  d.firstName = e.target.value;
-                })
-              }
-            />
-
-            <TextField
-              fullWidth
-              variant="standard"
-              label="Last Name"
-              type="text"
-              value={data.lastName || ""}
-              onChange={(e) =>
-                setData((d) => {
-                  d.lastName = e.target.value;
-                })
-              }
-            />
-          </HStack>
-
-          <TextField
-            variant="standard"
-            label="Bio"
-            type="text"
-            value={data.bio || ""}
-            onChange={(e) =>
-              setData((d) => {
-                d.bio = e.target.value;
-              })
-            }
-            multiline
-            rows={3}
-          />
-
-          <FormControl variant="standard">
-            <InputLabel>Gender</InputLabel>
-            <Select
-              label="Gender"
-              value={data.gender || Gender.OTHER}
-              onChange={(e) => {
-                setData((d) => {
-                  d.gender = e.target.value as Gender;
-                });
-              }}
-            >
-              <MenuItem value={Gender.MALE}>Male</MenuItem>
-              <MenuItem value={Gender.FEMALE}>Female</MenuItem>
-              <MenuItem value={Gender.OTHER}>Other</MenuItem>
-            </Select>
-          </FormControl>
-
-          <TextField
-            variant="standard"
-            label="Email"
-            type="email"
-            value={data.email || ""}
-            onChange={(e) =>
-              setData((d) => {
-                d.email = e.target.value;
-              })
-            }
-          />
-
-          <TextField
-            variant="standard"
-            label="Phone"
-            type="tel"
-            value={data.phone || ""}
-            onChange={(e) =>
-              setData((d) => {
-                d.phone = e.target.value;
-              })
-            }
-          />
-
-          <DatePicker
-            label="Birthday"
-            value={data.birthday ? dayjs(data.birthday) : null}
-            onChange={(v) => {
-              if (v) {
-                setData((d) => {
-                  d.birthday = v.toISOString();
-                });
-              }
+        <div className="flex justify-center">
+          <input
+            type="file"
+            ref={AvatarInputRef}
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) uploadAvatar(file);
             }}
-            slotProps={{
-              textField: {
-                variant: "standard",
-              },
-            }}
+            accept="image/*"
           />
-
-          {saveIsError && <Alert severity="error">{saveError.message}</Alert>}
-
-          <Button
-            variant="outlined"
-            onClick={handleSave}
-            disabled={saveIsPending}
+          <IconButton
+            onClick={() => AvatarInputRef.current!.click()}
+            disabled={uploadAvatarIsPending}
           >
-            Save
-          </Button>
+            {data.avatarId ? (
+              <img
+                src={`/api/minio-file/${data.avatarId}`}
+                alt="avatar"
+                className="w-20 h-20 rounded-full"
+              />
+            ) : (
+              <AccountCircle fontSize="large" />
+            )}
+          </IconButton>
+        </div>
 
-          <Button onClick={handleLogout} variant="outlined" color="error">
-            Logout
-          </Button>
-        </VStack>
+        <div className="flex gap-6">
+          <TextField
+            fullWidth
+            variant="standard"
+            label="名"
+            type="text"
+            value={data.firstName || ""}
+            onChange={(e) =>
+              setData((d) => {
+                d.firstName = e.target.value;
+              })
+            }
+          />
+
+          <TextField
+            fullWidth
+            variant="standard"
+            label="姓"
+            type="text"
+            value={data.lastName || ""}
+            onChange={(e) =>
+              setData((d) => {
+                d.lastName = e.target.value;
+              })
+            }
+          />
+        </div>
+
+        <TextField
+          variant="standard"
+          label="个人介绍"
+          type="text"
+          value={data.bio || ""}
+          onChange={(e) =>
+            setData((d) => {
+              d.bio = e.target.value;
+            })
+          }
+          multiline
+          rows={3}
+        />
+
+        <FormControl variant="standard">
+          <InputLabel>性别</InputLabel>
+          <Select
+            value={data.gender || Gender.OTHER}
+            onChange={(e) => {
+              setData((d) => {
+                d.gender = e.target.value as Gender;
+              });
+            }}
+          >
+            <MenuItem value={Gender.MALE}>男</MenuItem>
+            <MenuItem value={Gender.FEMALE}>女</MenuItem>
+            <MenuItem value={Gender.OTHER}>其他</MenuItem>
+          </Select>
+        </FormControl>
+
+        <TextField
+          variant="standard"
+          label="电子邮箱"
+          type="email"
+          value={data.email || ""}
+          onChange={(e) =>
+            setData((d) => {
+              d.email = e.target.value;
+            })
+          }
+        />
+
+        <TextField
+          variant="standard"
+          label="电话号码"
+          type="tel"
+          value={data.phone || ""}
+          onChange={(e) =>
+            setData((d) => {
+              d.phone = e.target.value;
+            })
+          }
+        />
+
+        <DatePicker
+          label="生日"
+          value={data.birthday ? dayjs(data.birthday) : null}
+          onChange={(v) => {
+            if (v) {
+              setData((d) => {
+                d.birthday = v.toISOString();
+              });
+            }
+          }}
+          slotProps={{
+            textField: {
+              variant: "standard",
+            },
+          }}
+        />
+
+        {saveIsError && <Alert severity="error">{saveError.message}</Alert>}
+
+        <Button
+          variant="outlined"
+          onClick={handleSave}
+          disabled={saveIsPending}
+        >
+          提交
+        </Button>
+
+        <Button onClick={handleLogout} variant="outlined" color="error">
+          退出登录
+        </Button>
       </div>
     </>
   );

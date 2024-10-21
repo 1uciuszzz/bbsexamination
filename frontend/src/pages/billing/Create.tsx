@@ -3,7 +3,7 @@ import BillingForm from "./BillingForm";
 const CreateBilling = () => {
   return (
     <>
-      <div className="p-4">
+      <div className="p-6">
         <BillingForm />
       </div>
     </>

@@ -1,19 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { API_BILLING } from "../../apis/billing";
+import dayjs from "dayjs";
+import PageLoader from "@/components/PageLoader";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  Alert,
-  Button,
-  Chip,
-  CircularProgress,
   Dialog,
   DialogContent,
-  Typography,
-} from "@mui/material";
-import VStack from "../../components/VStack";
-import HStack from "../../components/HStack";
-import dayjs from "dayjs";
-import Back from "../../components/Back";
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const Delete = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,76 +44,67 @@ const Delete = () => {
     del();
   };
 
-  if (isPending) return <CircularProgress />;
+  if (isPending) return <PageLoader />;
 
-  if (isError) return <Alert severity="error">{error.message}</Alert>;
+  if (isError)
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>错误</AlertTitle>
+        <AlertDescription>{error.message}</AlertDescription>
+      </Alert>
+    );
 
   return (
     <>
-      <Dialog open fullWidth>
+      <Dialog
+        open
+        onOpenChange={(open) => {
+          if (!open) {
+            navigate(`/billing`);
+          }
+        }}
+      >
         <DialogContent>
-          <VStack>
-            <HStack>
-              <Back to="/billing" />
-              <Typography variant="h5">Delete billing</Typography>
-            </HStack>
+          <DialogHeader>
+            <DialogTitle>删除帐单</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-6">
+              <Badge>账单类型</Badge>
+              <p>{data.data.type}</p>
+            </div>
+            <div className="flex items-center gap-6">
+              <Badge>账单名称</Badge>
+              <p>{data.data.name}</p>
+            </div>
+            <div className="flex items-center gap-6">
+              <Badge>账单分类</Badge>
+              <p>{data.data.category}</p>
+            </div>
+            <div className="flex items-center gap-6">
+              <Badge>账单日期</Badge>
+              <p>{dayjs(data.data.time).format("YYYY-MM-DD")}</p>
+            </div>
+            <div className="flex items-center gap-6">
+              <Badge>创建时间</Badge>
+              <p>{dayjs(data.data.createdAt).format("YYYY-MM-DD HH:mm:ss")}</p>
+            </div>
 
-            <HStack>
-              <Chip
-                label="Type"
-                size="small"
-                sx={{ borderRadius: 0, width: 96 }}
-              />
-              <Typography variant="body1">{data.data.type}</Typography>
-            </HStack>
-            <HStack>
-              <Chip
-                label="Name"
-                size="small"
-                sx={{ borderRadius: 0, width: 96 }}
-              />
-              <Typography variant="body1">{data.data.name}</Typography>
-            </HStack>
-            <HStack>
-              <Chip
-                label="Category"
-                size="small"
-                sx={{ borderRadius: 0, width: 96 }}
-              />
-              <Typography variant="body1">{data.data.category}</Typography>
-            </HStack>
-            <HStack>
-              <Chip
-                label="Time"
-                size="small"
-                sx={{ borderRadius: 0, width: 96 }}
-              />
-              <Typography variant="body1">
-                {dayjs(data.data.time).format("YYYY-MM-DD HH:mm:ss")}
-              </Typography>
-            </HStack>
-            <HStack>
-              <Chip
-                label="CreatedAt"
-                size="small"
-                sx={{ borderRadius: 0, width: 96 }}
-              />
-              <Typography variant="body1">
-                {dayjs(data.data.createdAt).format("YYYY-MM-DD HH:mm:ss")}
-              </Typography>
-            </HStack>
-
-            {delIsError && <Alert severity="error">{delError.message}</Alert>}
+            {delIsError && (
+              <Alert variant="destructive">
+                <AlertTitle>错误</AlertTitle>
+                <AlertDescription>{delError.message}</AlertDescription>
+              </Alert>
+            )}
 
             <Button
-              variant="outlined"
-              color="error"
+              variant="destructive"
               onClick={handleDelete}
               disabled={delIsPending}
             >
               Delete
             </Button>
-          </VStack>
+          </div>
         </DialogContent>
       </Dialog>
     </>

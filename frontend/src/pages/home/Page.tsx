@@ -1,5 +1,3 @@
-import { Typography } from "@mui/material";
-import VStack from "../../components/VStack";
 import FeatureCard from "./FeatureCard";
 import SavingSvg from "./SavingSvg";
 import LoveSvg from "./LoveSvg";
@@ -8,33 +6,31 @@ import { Link } from "react-router-dom";
 const HomePage = () => {
   return (
     <>
-      <div className="p-4">
-        <VStack>
-          <Typography variant="h5">Home</Typography>
+      <div className="flex flex-col gap-6 p-6">
+        <p className="text-2xl">首页</p>
 
-          <FeatureCard
-            media={<SavingSvg />}
-            title="Billing Record"
-            description="Record your billing data."
-            to="/billing"
-          />
+        <FeatureCard
+          media={<SavingSvg />}
+          title="账单记录"
+          description="记录你的每一笔支出"
+          to="/billing"
+        />
 
-          <LoveSvg />
+        <LoveSvg />
 
-          <div className="flex justify-center">
-            <Typography variant="caption">
-              Made with <span className="animate-pulse">❤️</span> by{" "}
-              <Link
-                to="https://github.com/1uciuszzz"
-                className="underline text-blue-600"
-                target="_blank"
-              >
-                B1g Ben
-              </Link>{" "}
-              with the help of Leehao
-            </Typography>
-          </div>
-        </VStack>
+        <div className="flex justify-center">
+          <small>
+            made with <span className="animate-pulse">❤️</span> by{" "}
+            <Link
+              to="https://github.com/1uciuszzz"
+              className="underline text-blue-600"
+              target="_blank"
+            >
+              B1g Ben
+            </Link>{" "}
+            with the help of Leehao
+          </small>
+        </div>
       </div>
     </>
   );

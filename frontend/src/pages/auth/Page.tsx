@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { API_AUTH } from "../../apis/auth";
 import { useMutation } from "@tanstack/react-query";
-import { CircularProgress } from "@mui/material";
+import PageLoader from "@/components/PageLoader";
 
 const AuthPage = () => {
   const { isPending, mutate, isSuccess } = useMutation({
@@ -15,7 +15,7 @@ const AuthPage = () => {
     mutate();
   }
 
-  if (isPending) return <CircularProgress />;
+  if (isPending) return <PageLoader />;
 
   if (isSuccess) return <Navigate to="/" />;
 
