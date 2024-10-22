@@ -156,7 +156,9 @@ const BillingForm = () => {
                     type="number"
                     placeholder="账单金额"
                     value={field.value ? field.value : ""}
-                    onChange={field.onChange}
+                    onChange={(e) => {
+                      billingForm.setValue("amount", +e.target.value);
+                    }}
                   />
                 </FormControl>
                 <FormMessage />

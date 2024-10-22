@@ -14,7 +14,6 @@ import { BillingService } from "./billing.service";
 import { User } from "src/auth/user.decorator";
 import { TokenPayload } from "src/auth/dto/user.dto";
 import { CreateBillingDto } from "./dto/create-billing.dto";
-import dayjs from "dayjs";
 import { ApiTags } from "@nestjs/swagger";
 
 @ApiTags("Billing")
@@ -87,8 +86,8 @@ export class BillingController {
     @Query("startTime") start: string | null,
     @Query("endTime") end: string | null,
   ) {
-    const now = dayjs();
-    const pastWeek = now.subtract(7, "d");
+    const now = new Date();
+    const pastWeek = new Date(now.getTime() - 604800000);
     start = start || pastWeek.toISOString();
     end = end || now.toISOString();
     const billings = await this.billingService.getByTimeRange(
