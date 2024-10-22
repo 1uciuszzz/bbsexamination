@@ -1,33 +1,33 @@
-import { BottomNavigation, BottomNavigationAction } from "@mui/material";
-import { AccountCircle, Home } from "@mui/icons-material";
-import { useImmer } from "use-immer";
-import { Link } from "react-router-dom";
+import { LayoutGrid, SquareUserRound } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Button } from "./ui/button";
 
 const BottomBar = () => {
-  const [value, setValue] = useImmer(0);
+  const location = useLocation();
 
   return (
-    <>
-      <BottomNavigation
-        value={value}
-        onChange={(_, newValue) => {
-          setValue(newValue);
-        }}
+    <div className="w-full flex bg-white">
+      <Button
+        className="flex-1"
+        variant={location.pathname == `/` ? "secondary" : "ghost"}
+        asChild
       >
-        <BottomNavigationAction
-          label="Home"
-          icon={<Home />}
-          component={Link}
-          to="/"
-        />
-        <BottomNavigationAction
-          label="Me"
-          icon={<AccountCircle />}
-          component={Link}
-          to="/me"
-        />
-      </BottomNavigation>
-    </>
+        <Link to="/">
+          <LayoutGrid />
+          首页
+        </Link>
+      </Button>
+      <Button
+        className="flex-1"
+        variant={location.pathname == `/me` ? "secondary" : "ghost"}
+        asChild
+      >
+        <Link to="/me">
+          <SquareUserRound />
+          用户
+        </Link>
+      </Button>
+    </div>
   );
 };
 

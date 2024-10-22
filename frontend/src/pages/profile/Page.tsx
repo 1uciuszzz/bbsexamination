@@ -1,32 +1,82 @@
-import {
-  Alert,
-  Button,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { useImmer } from "use-immer";
-import { API_AUTH, Gender, Profile } from "../../apis/auth";
+import { API_AUTH, Gender, UpdateProfileReq } from "../../apis/auth";
 import { useAtomValue, useSetAtom } from "jotai";
 import { profileAtom } from "../stores/profile";
-import { AccountCircle } from "@mui/icons-material";
-import { DatePicker } from "@mui/x-date-pickers";
-import dayjs from "dayjs";
 import { useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { API_MINIO_FILE } from "../../apis/minioFile";
 import toast from "react-hot-toast";
 import { accountAtom } from "../stores/account";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import dayjs from "dayjs";
+
+const profileFormSchema = z.object({
+  avatarId: z.string(),
+  bio: z.string().max(256, { message: `最大输入长度为256个字符` }),
+  birthday: z
+    .string()
+    .max(10, { message: `最大输入长度为10个字符` })
+    .regex(/(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])/, {
+      message: `请输入正确的日期:YYYY-MM-DD`,
+    }),
+  email: z
+    .string()
+    .max(128, { message: `最大输入长度为128个字符` })
+    .regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, {
+      message: `请输入正确的电子邮箱`,
+    }),
+  firstName: z
+    .string()
+    .min(1, { message: `请输入名字` })
+    .max(32, { message: `最大输入长度为32个字符` }),
+  gender: z.string(),
+  lastName: z
+    .string()
+    .min(1, { message: `请输入姓氏` })
+    .max(32, { message: `最大输入长度为32个字符` }),
+  phone: z.string().length(11, { message: `请输入中国大陆常用的11位电话号码` }),
+});
 
 const ProfilePage = () => {
   const profile = useAtomValue(profileAtom);
 
-  const [data, setData] = useImmer<Profile>(profile);
+  const profileForm = useForm<z.infer<typeof profileFormSchema>>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      avatarId: profile.avatarId || "",
+      bio: profile.bio || "",
+      birthday: profile.birthday
+        ? dayjs(profile.birthday).format("YYYY-MM-DD")
+        : "",
+      email: profile.email || "",
+      firstName: profile.firstName || "",
+      gender: profile.gender || "",
+      lastName: profile.lastName || "",
+      phone: profile.phone || "",
+    },
+  });
 
   const AvatarInputRef = useRef<HTMLInputElement>(null);
 
@@ -38,9 +88,7 @@ const ProfilePage = () => {
   } = useMutation({
     mutationFn: (file: File) => API_MINIO_FILE.UPLOAD_SMALL_FILE(file),
     onSuccess: (res) => {
-      setData((d) => {
-        d.avatarId = res.data.id;
-      });
+      profileForm.setValue("avatarId", res.data.id);
       AvatarInputRef.current!.value = "";
     },
   });
@@ -53,25 +101,24 @@ const ProfilePage = () => {
     isError: saveIsError,
     error: saveError,
   } = useMutation({
-    mutationFn: () =>
-      API_AUTH.UPDATE_PROFILE({
-        avatarId: data.avatarId || "",
-        bio: data.bio || "",
-        birthday: data.birthday || "",
-        email: data.email || "",
-        firstName: data.firstName || "",
-        gender: data.gender || Gender.OTHER,
-        lastName: data.lastName || "",
-        phone: data.phone || "",
-      }),
+    mutationFn: (payload: UpdateProfileReq) => API_AUTH.UPDATE_PROFILE(payload),
     onSuccess: (res) => {
       setProfile(res.data);
-      toast.success("Saved");
+      toast.success("保存成功");
     },
   });
 
-  const handleSave = () => {
-    save();
+  const handleSave = (values: z.infer<typeof profileFormSchema>) => {
+    save({
+      avatarId: values.avatarId,
+      bio: values.bio,
+      birthday: new Date(values.birthday).toISOString(),
+      email: values.email,
+      firstName: values.firstName,
+      gender: values.gender as Gender,
+      lastName: values.lastName,
+      phone: values.phone,
+    });
   };
 
   const setAccount = useSetAtom(accountAtom);
@@ -99,157 +146,186 @@ const ProfilePage = () => {
   };
 
   return (
-    <>
-      <div className="flex flex-col gap-6 p-6">
-        <Typography variant="h5">笨钟账单</Typography>
+    <div className="flex flex-col gap-6 p-6">
+      <h1 className="text-2xl">笨钟账单</h1>
 
-        <Typography variant="h6">用户资料</Typography>
+      <h2 className="text-xl">用户资料</h2>
 
-        {uploadAvatarIsError && (
-          <Alert severity="error">{uploadAvatarError.message}</Alert>
-        )}
+      {uploadAvatarIsError && (
+        <Alert variant="destructive">
+          <AlertTitle>错误</AlertTitle>
+          <AlertDescription>{uploadAvatarError.message}</AlertDescription>
+        </Alert>
+      )}
 
-        <div className="flex justify-center">
-          <input
-            type="file"
-            ref={AvatarInputRef}
-            hidden
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) uploadAvatar(file);
-            }}
-            accept="image/*"
-          />
-          <IconButton
-            onClick={() => AvatarInputRef.current!.click()}
-            disabled={uploadAvatarIsPending}
-          >
-            {data.avatarId ? (
-              <img
-                src={`/api/minio-file/${data.avatarId}`}
-                alt="avatar"
-                className="w-20 h-20 rounded-full"
-              />
-            ) : (
-              <AccountCircle fontSize="large" />
-            )}
-          </IconButton>
-        </div>
-
-        <div className="flex gap-6">
-          <TextField
-            fullWidth
-            variant="standard"
-            label="名"
-            type="text"
-            value={data.firstName || ""}
-            onChange={(e) =>
-              setData((d) => {
-                d.firstName = e.target.value;
-              })
-            }
-          />
-
-          <TextField
-            fullWidth
-            variant="standard"
-            label="姓"
-            type="text"
-            value={data.lastName || ""}
-            onChange={(e) =>
-              setData((d) => {
-                d.lastName = e.target.value;
-              })
-            }
-          />
-        </div>
-
-        <TextField
-          variant="standard"
-          label="个人介绍"
-          type="text"
-          value={data.bio || ""}
-          onChange={(e) =>
-            setData((d) => {
-              d.bio = e.target.value;
-            })
-          }
-          multiline
-          rows={3}
-        />
-
-        <FormControl variant="standard">
-          <InputLabel>性别</InputLabel>
-          <Select
-            value={data.gender || Gender.OTHER}
-            onChange={(e) => {
-              setData((d) => {
-                d.gender = e.target.value as Gender;
-              });
-            }}
-          >
-            <MenuItem value={Gender.MALE}>男</MenuItem>
-            <MenuItem value={Gender.FEMALE}>女</MenuItem>
-            <MenuItem value={Gender.OTHER}>其他</MenuItem>
-          </Select>
-        </FormControl>
-
-        <TextField
-          variant="standard"
-          label="电子邮箱"
-          type="email"
-          value={data.email || ""}
-          onChange={(e) =>
-            setData((d) => {
-              d.email = e.target.value;
-            })
-          }
-        />
-
-        <TextField
-          variant="standard"
-          label="电话号码"
-          type="tel"
-          value={data.phone || ""}
-          onChange={(e) =>
-            setData((d) => {
-              d.phone = e.target.value;
-            })
-          }
-        />
-
-        <DatePicker
-          label="生日"
-          value={data.birthday ? dayjs(data.birthday) : null}
-          onChange={(v) => {
-            if (v) {
-              setData((d) => {
-                d.birthday = v.toISOString();
-              });
-            }
-          }}
-          slotProps={{
-            textField: {
-              variant: "standard",
-            },
-          }}
-        />
-
-        {saveIsError && <Alert severity="error">{saveError.message}</Alert>}
-
-        <Button
-          variant="outlined"
-          onClick={handleSave}
-          disabled={saveIsPending}
+      <Form {...profileForm}>
+        <form
+          onSubmit={profileForm.handleSubmit(handleSave)}
+          className="flex flex-col gap-6"
         >
-          提交
-        </Button>
+          <div className="flex gap-6 items-end">
+            <input
+              type="file"
+              ref={AvatarInputRef}
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadAvatar(file);
+              }}
+              accept=".jpg,.jpeg,.png"
+            />
 
-        <Button onClick={handleLogout} variant="outlined" color="error">
+            <Avatar
+              onClick={
+                uploadAvatarIsPending
+                  ? undefined
+                  : () => {
+                      AvatarInputRef.current?.click();
+                    }
+              }
+            >
+              <AvatarImage
+                src={`/api/minio-file/${profileForm.getValues("avatarId")}`}
+                alt="avatar"
+              />
+              <AvatarFallback>BB</AvatarFallback>
+            </Avatar>
+
+            <FormField
+              control={profileForm.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>名字</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={saveIsPending} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={profileForm.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormLabel>姓氏</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={saveIsPending} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={profileForm.control}
+            name="bio"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>个人介绍</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="bio"
+                    {...field}
+                    disabled={saveIsPending}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={profileForm.control}
+            name="gender"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>性别</FormLabel>
+                <FormControl>
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={saveIsPending}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="性别" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={Gender.FEMALE}>女</SelectItem>
+                      <SelectItem value={Gender.MALE}>男</SelectItem>
+                      <SelectItem value={Gender.OTHER}>其他</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={profileForm.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>电子邮箱</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={saveIsPending} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={profileForm.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>电话号码</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={saveIsPending} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={profileForm.control}
+            name="birthday"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>生日</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="YYYY-MM-DD"
+                    disabled={saveIsPending}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {saveIsError && (
+            <Alert variant="destructive">
+              <AlertTitle>错误</AlertTitle>
+              <AlertDescription>{saveError.message}</AlertDescription>
+            </Alert>
+          )}
+
+          <Button
+            type="submit"
+            disabled={saveIsPending || uploadAvatarIsPending}
+          >
+            提交
+          </Button>
+        </form>
+
+        <Button onClick={handleLogout} variant="destructive">
           退出登录
         </Button>
-      </div>
-    </>
+      </Form>
+    </div>
   );
 };
 

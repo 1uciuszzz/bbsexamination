@@ -2,10 +2,10 @@ import { Outlet } from "react-router-dom";
 import BottomBar from "./components/BottomBar";
 import { useQuery } from "@tanstack/react-query";
 import { useSetAtom } from "jotai";
-import { CircularProgress } from "@mui/material";
 import { accountAtom } from "./pages/stores/account";
 import { profileAtom } from "./pages/stores/profile";
 import { API_AUTH } from "./apis/auth";
+import PageLoader from "./components/PageLoader";
 
 const App = () => {
   const setAccount = useSetAtom(accountAtom);
@@ -18,7 +18,7 @@ const App = () => {
     retry: 0,
   });
 
-  if (isPending) return <CircularProgress />;
+  if (isPending) return <PageLoader />;
 
   if (isSuccess) {
     setAccount(data.data.account);

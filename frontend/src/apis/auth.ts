@@ -48,7 +48,7 @@ type MeRes = {
   profile: Profile;
 };
 
-type UpdateProfileReq = {
+export type UpdateProfileReq = {
   avatarId: string;
   bio: string;
   email: string;
