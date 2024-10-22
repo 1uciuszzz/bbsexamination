@@ -96,4 +96,3 @@ export class AuthController {
     return profile;
   }
 }
-

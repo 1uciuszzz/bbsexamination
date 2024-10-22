@@ -14,8 +14,10 @@ import { BillingService } from "./billing.service";
 import { User } from "src/auth/user.decorator";
 import { TokenPayload } from "src/auth/dto/user.dto";
 import { CreateBillingDto } from "./dto/create-billing.dto";
-import * as dayjs from "dayjs";
+import dayjs from "dayjs";
+import { ApiTags } from "@nestjs/swagger";
 
+@ApiTags("Billing")
 @Controller("billing")
 export class BillingController {
   constructor(private readonly billingService: BillingService) {}
